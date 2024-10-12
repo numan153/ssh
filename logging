@@ -1,0 +1,39 @@
+import pexpect
+
+# Define variables
+ip_address = '192.168.56.101'
+username = 'prne'
+password = 'cisco123!'
+password_enable = 'class123!'
+
+# Log SSH session for debugging
+session_log = open('session_log.txt', 'w')
+
+print('--- Starting SSH session...')
+session = pexpect.spawn('ssh -o StrictHostKeyChecking=no ' + username + '@' + ip_address, encoding='utf-8', timeout=40)
+session.logfile = session_log  # Enable logging to file
+
+# Check for the SSH key acceptance prompt
+result = session.expect(['(yes/no)', 'Password:', pexpect.TIMEOUT, pexpect.EOF])
+
+if result == 0:
+    print('--- Accepting SSH key...')
+    session.sendline('yes')
+    result = session.expect(['Password:', pexpect.TIMEOUT, pexpect.EOF])
+
+if result != 1:
+    print('--- FAILURE! creating session for: ', ip_address)
+    session_log.close()
+    exit()
+
+print('--- Sending user password...')
+session.sendline(password)
+result = session.expect(['>', pexpect.TIMEOUT, pexpect.EOF])
+
+if result != 0:
+    print('--- FAILURE! entering password: ', password)
+    session_log.close()
+    exit()
+
+print('--- Success! SSH session established.')
+session_log.close()
